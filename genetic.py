@@ -7,10 +7,22 @@ import math
 
 class Population(object):
     def __init__(self, n_individuals, individual_length, gene_max, fitness_func):
-        self.n_individuals = n_individuals
         self.individuals = [Individual(individual_length, gene_max, fitness_func) for i in range(0, self.n_individuals)]
-        self.individuals.sort(reverse = True)
+        self._finish_init(n_individuals)
         
+    def _finish_init(self, n_individuals):
+        self.n_individuals = n_individuals
+        self.individuals.sort()
+        self.fittest = self.individuals[0]
+        self.best_fitness = self.individuals[0].fitness
+        self.avg_fitness = self._calc_avg_fitness()
+
+    def _calc_avg_fitness(self):
+        sum = 0
+        for individual in self.individuals:
+            sum += individual.fitness
+        return sum / self.n_individuals
+    
     def new_population(self, preserve_percent, non_optimal = 0, mutation_percent = .05):
         n_parents = math.floor(self.n_individuals * preserve_percent)
         n_non_optimal = math.floor(self.n_individuals * non_optimal)
@@ -25,24 +37,20 @@ class Population(object):
             child.mutate(mutation_percent)
             next_gen_individuals.append(child)
         return New_Population(self.n_individuals, next_gen_individuals)
-
-    def get_fittest(self):
-        return self.individuals[0]
-
-    def get_best_fitness(self):
-        return self.individuals[0].fitness
     
 class New_Population(Population):
     def __init__(self, n_individuals, individuals):
-        self.n_individuals = n_individuals
         self.individuals = individuals
-        self.individuals.sort(reverse = True)
+        self._finish_init(n_individuals)
         
 class Individual(object):
     def __init__(self, individual_length, gene_max, fitness_func):
+        self.chromosome = [random.randint(0, self.max) for i in range(0, self.length)]
+        self._finish_init(individual_length, gene_max, fitness_func)
+        
+    def _finish_init(self, individual_length, gene_max, fitness_func):
         self.max = gene_max
         self.length = individual_length
-        self.chromosome = [random.randint(0, self.max) for i in range(0, self.length)]
         self.fitness_func = fitness_func
         self.fitness = self.fitness_func(self.chromosome)
 
@@ -82,18 +90,15 @@ class Individual(object):
 class NewIndividual(Individual):
     def __init__(self, chromosome, gene_max, fitness_func):
         self.chromosome = chromosome
-        self.length = len(self.chromosome)
-        self.max = gene_max
-        self.fitness_func = fitness_func
-        self.fitness = self.fitness_func(self.chromosome)
+        self._finish_init(len(self.chromosome), gene_max, fitness_func)
 
 def evolve(n_individuals, individual_length, gene_max, fitness_func, preserve_percent, non_optimal = 0, mutation_percent = 0.05):
     generation = Population(n_individuals, individual_length, gene_max, fitness_func)
     last_fitness = 0
-    next_fitness = generation.get_best_fitness()
+    next_fitness = generation.avg_fitness
     while last_fitness < next_fitness:
         generation = generation.new_population(preserve_percent, non_optimal, mutation_percent)
         last_fitness = next_fitness
-        next_fitness = generation.get_best_fitness()
-    print("Fittest individual has a fitness of " + str(next_fitness))
-    return generation.get_fittest()
+        next_fitness = generation.avg_fitness()
+    print("Fittest individual has a fitness of " + str(generation.best_fitness))
+    return generation.fittest
