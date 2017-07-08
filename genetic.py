@@ -271,3 +271,21 @@ def evolve(n_individuals, individual_length, fitness_func, preserve_percent,
         next_fitness = generation.avg_fitness
     print("Fittest individual has a fitness of " + str(generation.best_fitness))
     return generation.fittest
+
+### Generations Function ###
+def generations(n_generations, population, preserve_percent, non_optimal = 0, mutation_percent = 0.05):
+    """Evolve a population for given number of generations.
+
+    Usage:
+    generations(n_generations, population, preserve_percent[, non_optimal, mutation_percent, gene_max])
+    
+    Parameters:
+    n_generations -- The number of generations to evolve for
+    population -- The population to evolve
+    preserve_percent -- The proportion of highest performing individuals to use as parents for the next generation.
+    non_optimal -- The proportion of randomly selected individuals to use as parents. Defaults to 0.
+    mutation_percent -- The probability of a mutation occurring at any given point along a chromosome. Defaults to 0.05.
+    """
+    for i in range(0, n_generations):
+        population = population.new_population(preserve_percent, non_optimal, mutation_percent)
+    return population
