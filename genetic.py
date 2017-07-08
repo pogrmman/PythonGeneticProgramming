@@ -6,6 +6,9 @@ import random
 import math
 import collections.abc
 
+##### Classes #####
+### Population Classes ###
+## Generic Population Class ##
 class Population(collections.abc.Sequence):
     """Class to create a population of individuals for a given fitness function.
 
@@ -92,7 +95,8 @@ class Population(collections.abc.Sequence):
                 matched = True
                 break
         return matched
-    
+
+## New Population Class ##    
 class New_Population(Population):
     """Class to create a population from a list of individuals.
 
@@ -110,7 +114,9 @@ class New_Population(Population):
         """
         self.individuals = individuals
         self._finish_init(n_individuals)
-        
+
+### Individual Classes ###
+## Basic Individual Class ##
 class Individual(collections.abc.Sequence):
     """Class to create a single individual.
 
@@ -218,6 +224,7 @@ class Individual(collections.abc.Sequence):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+## New Individual Class ##
 class NewIndividual(Individual):
     """Class to create a new individual from a given chromosome.
 
@@ -237,6 +244,8 @@ class NewIndividual(Individual):
         self.chromosome = chromosome
         self._finish_init(len(self.chromosome), gene_max, fitness_func)
 
+##### Functions #####
+### Evolve Function ###
 def evolve(n_individuals, individual_length, fitness_func, preserve_percent,
            non_optimal = 0, mutation_percent = 0.05, gene_max = 100):
     """Evolve a solution to a fitness function.
