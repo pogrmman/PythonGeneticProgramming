@@ -24,24 +24,26 @@ class Population(collections.abc.Sequence):
 
     This class provides the methods to be used as a sequence.
     """
-    def __init__(self, n_individuals, individual_length, gene_max, fitness_func):
+    def __init__(self, n_individuals, individual_length, gene_max, fitness_func, maximize = False):
         """Initialize the population.
 
         Usage:
-        __init__(n_individuals, individual_length, gene_max, fitness_func)
+        __init__(n_individuals, individual_length, gene_max, fitness_func[, maximize])
 
         Parameters:
         n_individuals -- The number of individuals in the population.
         individual_length -- The length of an individual's chromosome.
         gene_max -- The maximum value for any spot in an individual's chromosome.
         fitness_func -- A function that takes a chromosome and returns its fitness.
+        maximize -- A boolean to control whether to maximize or minimize the fitness function. Defaults to false.
         """
         self.individuals = [Individual(individual_length, gene_max, fitness_func) for i in range(0, n_individuals)]
+        self.maximize = maximize
         self._finish_init(n_individuals)
         
     def _finish_init(self, n_individuals):
         self.n_individuals = n_individuals
-        self.individuals.sort()
+        self.individuals.sort(reverse = self.maximize)
         self.fittest = self.individuals[0]
         self.best_fitness = self.individuals[0].fitness
         self.avg_fitness = self._calc_avg_fitness()
@@ -75,7 +77,7 @@ class Population(collections.abc.Sequence):
             child = parent1.crossover(parent2)
             child.mutate(mutation_percent)
             next_gen_individuals.append(child)
-        return New_Population(self.n_individuals, next_gen_individuals)
+        return New_Population(self.n_individuals, next_gen_individuals, maximize)
 
     # Container emulation methods
     def __getitem__(self, index):
@@ -102,7 +104,7 @@ class New_Population(Population):
 
     Provides all public methods and attributes of the Population class.
     """
-    def __init__(self, n_individuals, individuals):
+    def __init__(self, n_individuals, individuals, maximize):
         """Initialize a population from a list of individuals.
 
         Usage:
@@ -113,6 +115,7 @@ class New_Population(Population):
         individuals -- A list of individuals.
         """
         self.individuals = individuals
+        self.maximize = maximize
         self._finish_init(n_individuals)
 
 ### Individual Classes ###
@@ -247,11 +250,11 @@ class NewIndividual(Individual):
 ##### Functions #####
 ### Evolve Function ###
 def evolve(n_individuals, individual_length, fitness_func, preserve_percent,
-           non_optimal = 0, mutation_percent = 0.05, gene_max = 100):
+           non_optimal = 0, mutation_percent = 0.05, gene_max = 100, maximize = False):
     """Evolve a solution to a fitness function.
 
     Usage:
-    evolve(n_individuals, individual_length, fitness_func, preserve_percent[, non_optimal, mutation_percent, gene_max])
+    evolve(n_individuals, individual_length, fitness_func, preserve_percent[, non_optimal, mutation_percent, gene_max, maximize])
 
     Parameters:
     n_individuals -- The number of individuals in each generation.
@@ -261,8 +264,9 @@ def evolve(n_individuals, individual_length, fitness_func, preserve_percent,
     non_optimal -- The proportion of randomly selected individuals to add to the pool of parents. Defaults to 0.
     mutation_percent -- The probability of a given location on a chromosome mutating. Defaults to 0.05.
     gene_max -- The maximum value to use on any location of a chromosome. Defaults to 100.
+    maximize -- A boolean to control wether to maximize or minimize the fitness function.
     """
-    generation = Population(n_individuals, individual_length, gene_max, fitness_func)
+    generation = Population(n_individuals, individual_length, gene_max, fitness_func, maximize)
     last_fitness = 0
     next_fitness = generation.avg_fitness
     while last_fitness < next_fitness:
