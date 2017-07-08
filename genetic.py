@@ -4,10 +4,11 @@
 ### Builtin Modules ###
 import random
 import math
+import collections.abc
 
-class Population(object):
+class Population(collections.abc.Sequence):
     def __init__(self, n_individuals, individual_length, gene_max, fitness_func):
-        self.individuals = [Individual(individual_length, gene_max, fitness_func) for i in range(0, self.n_individuals)]
+        self.individuals = [Individual(individual_length, gene_max, fitness_func) for i in range(0, n_individuals)]
         self._finish_init(n_individuals)
         
     def _finish_init(self, n_individuals):
@@ -37,15 +38,34 @@ class Population(object):
             child.mutate(mutation_percent)
             next_gen_individuals.append(child)
         return New_Population(self.n_individuals, next_gen_individuals)
+
+    # Container emulation methods
+    def __getitem__(self, index):
+        return self.individuals[index]
+
+    def __len__(self):
+        return self.n_individuals
+
+    def __iter__(self):
+        for item in self.individuals:
+            yield item
+
+    def __contains__(self, individual):
+        matched = False
+        for indiv in self.individuals:
+            if individual == indiv:
+                matched = True
+                break
+        return matched
     
 class New_Population(Population):
     def __init__(self, n_individuals, individuals):
         self.individuals = individuals
         self._finish_init(n_individuals)
         
-class Individual(object):
+class Individual(collections.abc.Sequence):
     def __init__(self, individual_length, gene_max, fitness_func):
-        self.chromosome = [random.randint(0, self.max) for i in range(0, self.length)]
+        self.chromosome = [random.randint(0, gene_max) for i in range(0, individual_length)]
         self._finish_init(individual_length, gene_max, fitness_func)
         
     def _finish_init(self, individual_length, gene_max, fitness_func):
@@ -69,8 +89,30 @@ class Individual(object):
                 chromosome[index] = other.chromosome[index]
         return NewIndividual(chromosome, self.max, self.fitness_func)
 
+    # Container emulation methods
+    def __getitem__(self, index):
+        return self.chromosome[index]
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        for item in self.chromosome:
+            yield item
+
+    def __contains__(self, item):
+        return item in self.chromosome
+
+    # Methods to allow comparison (for sorting)
     def __eq__(self, other):
-        return self.fitness == other.fitness
+        identical_chromosomes = True
+        for index, item in self.chromosome:
+            if other[index] != item:
+                identical_chromosomes = False
+        if len(other) != self.length:
+            identical_chromosomes = False
+        return (self.max == other.max and self.fitness == other.fitness
+                                      and identical_chromosomes)
 
     def __lt__(self, other):
         return self.fitness < other.fitness
@@ -85,20 +127,21 @@ class Individual(object):
         return self.fitness >= other.fitness
 
     def __ne__(self, other):
-        return self.fitness != other.fitness
+        return not self.__eq__(other)
 
 class NewIndividual(Individual):
     def __init__(self, chromosome, gene_max, fitness_func):
         self.chromosome = chromosome
         self._finish_init(len(self.chromosome), gene_max, fitness_func)
 
-def evolve(n_individuals, individual_length, gene_max, fitness_func, preserve_percent, non_optimal = 0, mutation_percent = 0.05):
+def evolve(n_individuals, individual_length, gene_max, fitness_func, preserve_percent,
+           non_optimal = 0, mutation_percent = 0.05):
     generation = Population(n_individuals, individual_length, gene_max, fitness_func)
     last_fitness = 0
     next_fitness = generation.avg_fitness
     while last_fitness < next_fitness:
         generation = generation.new_population(preserve_percent, non_optimal, mutation_percent)
         last_fitness = next_fitness
-        next_fitness = generation.avg_fitness()
+        next_fitness = generation.avg_fitness
     print("Fittest individual has a fitness of " + str(generation.best_fitness))
     return generation.fittest
